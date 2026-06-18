@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A'REST Daily Operations Checklist</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a1a;
+    color: #f0f0f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .container { max-width: 600px; margin: 0 auto; }
+
+  .header {
+    background: linear-gradient(135deg, #7b8cde, #5d6fc4);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(123,140,222,0.25);
+  }
+  .header h1 { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+  .header .daydate { font-size: 14px; opacity: 0.92; font-weight: 500; }
+
+  .card {
+    background: #232323;
+    border: 1px solid #333;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: #9aa3c7;
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  input[type="text"], input[type="time"] {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: #f0f0f0;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, input[type="time"]:focus {
+    border-color: #7b8cde;
+  }
+  input::placeholder { color: #666; }
+
+  .reminder {
+    background: rgba(123,140,222,0.12);
+    border: 1px solid rgba(123,140,222,0.35);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: #c2cbf0;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+  .reminder .icon { font-size: 15px; flex-shrink: 0; }
+
+  .progress-wrap {
+    margin-bottom: 16px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #ccc;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .progress-label span.count { color: #7b8cde; }
+  .progress-bar-bg {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    background: linear-gradient(90deg, #7b8cde, #9ba8e8);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+    width: 0%;
+  }
+
+  .task {
+    background: #1f1f1f;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .task.done {
+    border-color: #7b8cde;
+    background: rgba(123,140,222,0.08);
+  }
+  .task-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .checkbox {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 2px solid #555;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: transparent;
+    transition: all 0.2s;
+    margin-top: 1px;
+  }
+  .checkbox.checked {
+    background: #7b8cde;
+    border-color: #7b8cde;
+    color: #1a1a1a;
+  }
+  .task-info { flex: 1; }
+  .task-desc {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #f0f0f0;
+    margin-bottom: 4px;
+  }
+  .task-desc.struck {
+    color: #8a8fa8;
+  }
+  .task-cat {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 2px 8px;
+    border-radius: 5px;
+    background: rgba(123,140,222,0.18);
+    color: #aab4ec;
+  }
+  .task-extra {
+    margin-top: 12px;
+    display: none;
+    gap: 10px;
+  }
+  .task-extra.show {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .task-extra .field { flex: 1; min-width: 130px; }
+  .task-extra label { font-size: 10.5px; margin-bottom: 4px; }
+
+  .total-row {
+    background: #232323;
+    border: 1px solid #333;
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #7b8cde;
+  }
+
+  .sig-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .sig-row .field { flex: 1; }
+
+  button.submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #7b8cde, #5d6fc4);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(123,140,222,0.3);
+  }
+  button.submit-btn:active { transform: scale(0.98); }
+  button.submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #232323;
+    border: 1px solid #444;
+    border-radius: 16px;
+    padding: 20px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal h3 { font-size: 16px; margin-bottom: 12px; color: #7b8cde; }
+  .modal pre {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #ddd;
+    margin-bottom: 14px;
+    font-family: inherit;
+    line-height: 1.5;
+  }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 700;
+    font-size: 13.5px;
+    cursor: pointer;
+  }
+  .btn-send { background: #7b8cde; color: #fff; }
+  .btn-close { background: #3a3a3a; color: #ddd; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #2d2d2d;
+    border: 1px solid #7b8cde;
+    color: #f0f0f0;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 1100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>A'REST Daily Operations Checklist</h1>
+    <div class="daydate" id="dayDateLabel">Loading...</div>
+  </div>
+
+  <div class="card">
+    <label for="supName">Supervisor Name</label>
+    <input type="text" id="supName" placeholder="Enter your name">
+  </div>
+
+  <div class="reminder">
+    <span class="icon">📌</span>
+    <span>Reminder: End-of-Month Stock Count must be completed on the last day of every month (Bar &amp; Kitchen).</span>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progress</span>
+      <span><span class="count" id="progCount">0</span> / <span id="progTotal">0</span> completed</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progBar"></div>
+    </div>
+  </div>
+
+  <div id="taskList"></div>
+
+  <div class="card sig-row">
+    <div class="field">
+      <label for="sigName">Supervisor Signature</label>
+      <input type="text" id="sigName" placeholder="Type full name to confirm">
+    </div>
+    <div class="field">
+      <label for="dateReviewed">Date Reviewed</label>
+      <input type="text" id="dateReviewed" placeholder="dd/mm/yyyy">
+    </div>
+  </div>
+
+  <button class="submit-btn" id="submitBtn">Generate WhatsApp Summary</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>WhatsApp Summary</h3>
+    <pre id="modalText"></pre>
+    <div class="modal-btns">
+      <button class="btn-send" id="sendBtn">Copy</button>
+      <button class="btn-close" id="closeBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DAY_TASKS = {
+  0: { name: "Sunday", tasks: [
+    { desc: "Air-cond upstairs condition", cat: "Maintenance" },
+    { desc: "Air-cond downstairs condition", cat: "Maintenance" },
+    { desc: "Arrange end-of-week stock count – Bar", cat: "Inventory" },
+    { desc: "Arrange end-of-week stock count – Kitchen", cat: "Inventory" }
+  ]},
+  1: { name: "Monday", tasks: [
+    { desc: "Water filter cleaning condition", cat: "Maintenance" },
+    { desc: "Display rack – upstairs cleaning condition", cat: "Cleanliness" },
+    { desc: "Display rack – downstairs cleaning condition", cat: "Cleanliness" },
+    { desc: "Weekday ordering", cat: "Ordering" },
+    { desc: "Key in weekly stock count", cat: "Inventory" }
+  ]},
+  2: { name: "Tuesday", tasks: [
+    { desc: "Cake display chiller cleanliness – upstairs", cat: "Cleanliness" },
+    { desc: "Cake display chiller cleanliness – downstairs", cat: "Cleanliness" },
+    { desc: "Bar chiller condition", cat: "Maintenance" },
+    { desc: "Bar freezer condition", cat: "Maintenance" }
+  ]},
+  3: { name: "Wednesday", tasks: [
+    { desc: "Kitchen chiller condition", cat: "Maintenance" },
+    { desc: "Kitchen freezer condition", cat: "Maintenance" },
+    { desc: "Kitchen grease trap", cat: "Maintenance" },
+    { desc: "Bar stock ordering – Shopee", cat: "Ordering" },
+    { desc: "Bar stock ordering – Supplier", cat: "Ordering" }
+  ]},
+  4: { name: "Thursday", tasks: [
+    { desc: "Weekend ordering", cat: "Ordering" },
+    { desc: "Check upstairs kitchen store", cat: "Inventory" }
+  ]},
+  5: { name: "Friday", tasks: [
+    { desc: "Check all table stability", cat: "Maintenance" },
+    { desc: "Food menu condition", cat: "Cleanliness" },
+    { desc: "Drinks menu condition", cat: "Cleanliness" },
+    { desc: "Outside stair condition", cat: "Maintenance" },
+    { desc: "Floor condition", cat: "Maintenance" },
+    { desc: "Paint condition", cat: "Maintenance" }
+  ]},
+  6: { name: "Saturday", tasks: [
+    { desc: "Upstairs lighting condition", cat: "Maintenance" },
+    { desc: "Downstairs lighting condition", cat: "Maintenance" }
+  ]}
+};
+
+const today = new Date();
+const dayIdx = today.getDay();
+const dayInfo = DAY_TASKS[dayIdx];
+const dateStr = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+document.getElementById('dayDateLabel').textContent = dayInfo.name + " — " + dateStr;
+document.getElementById('progTotal').textContent = dayInfo.tasks.length;
+
+// default date reviewed
+const dd = String(today.getDate()).padStart(2,'0');
+const mm = String(today.getMonth()+1).padStart(2,'0');
+const yyyy = today.getFullYear();
+document.getElementById('dateReviewed').value = `${dd}/${mm}/${yyyy}`;
+
+const taskListEl = document.getElementById('taskList');
+const state = dayInfo.tasks.map(t => ({ ...t, done: false, remarks: '', timeDone: '' }));
+
+function nowTimeStr() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function renderTasks() {
+  taskListEl.innerHTML = '';
+  state.forEach((t, i) => {
+    const taskEl = document.createElement('div');
+    taskEl.className = 'task' + (t.done ? ' done' : '');
+    taskEl.innerHTML = `
+      <div class="task-top">
+        <div class="checkbox ${t.done ? 'checked' : ''}" data-idx="${i}">${t.done ? '✓' : ''}</div>
+        <div class="task-info">
+          <div class="task-desc ${t.done ? 'struck' : ''}">${t.desc}</div>
+          <span class="task-cat">${t.cat}</span>
+        </div>
+      </div>
+      <div class="task-extra ${t.done ? 'show' : ''}">
+        <div class="field">
+          <label>Time Done</label>
+          <input type="time" data-time="${i}" value="${t.timeDone}">
+        </div>
+        <div class="field">
+          <label>Remarks</label>
+          <input type="text" data-remarks="${i}" placeholder="Optional" value="${t.remarks}">
+        </div>
+      </div>
+    `;
+    taskListEl.appendChild(taskEl);
+  });
+
+  // checkbox listeners
+  document.querySelectorAll('.checkbox').forEach(cb => {
+    cb.addEventListener('click', () => {
+      const i = parseInt(cb.dataset.idx);
+      state[i].done = !state[i].done;
+      if (state[i].done && !state[i].timeDone) {
+        state[i].timeDone = nowTimeStr();
+      }
+      renderTasks();
+      updateProgress();
+    });
+  });
+
+  // time inputs
+  document.querySelectorAll('[data-time]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      state[parseInt(inp.dataset.time)].timeDone = inp.value;
+    });
+  });
+
+  // remarks inputs
+  document.querySelectorAll('[data-remarks]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      state[parseInt(inp.dataset.remarks)].remarks = inp.value;
+    });
+  });
+}
+
+function updateProgress() {
+  const completed = state.filter(t => t.done).length;
+  document.getElementById('progCount').textContent = completed;
+  const pct = state.length ? (completed / state.length) * 100 : 0;
+  document.getElementById('progBar').style.width = pct + '%';
+}
+
+renderTasks();
+updateProgress();
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const supName = document.getElementById('supName').value.trim();
+  const sigName = document.getElementById('sigName').value.trim();
+  const dateReviewed = document.getElementById('dateReviewed').value.trim();
+
+  if (!supName) {
+    showToast('Please enter supervisor name');
+    document.getElementById('supName').focus();
+    return;
+  }
+
+  const completed = state.filter(t => t.done).length;
+  const total = state.length;
+
+  let msg = `*A'REST DAMANSARA UPTOWN*\n`;
+  msg += `*Daily Operations Checklist*\n`;
+  msg += `————————————————\n`;
+  msg += `📅 ${dayInfo.name}, ${dateStr}\n`;
+  msg += `👤 Supervisor: ${supName}\n`;
+  msg += `✅ Completed: ${completed}/${total}\n`;
+  msg += `————————————————\n\n`;
+
+  state.forEach((t, i) => {
+    const icon = t.done ? '✅' : '⬜';
+    msg += `${icon} ${t.desc} (${t.cat})\n`;
+    if (t.done && t.timeDone) msg += `   ⏱ Time: ${t.timeDone}\n`;
+    if (t.remarks) msg += `   📝 Remarks: ${t.remarks}\n`;
+  });
+
+  msg += `\n————————————————\n`;
+  msg += `📌 Reminder: End-of-Month Stock Count must be completed on the last day of every month (Bar & Kitchen).\n\n`;
+  msg += `Signature: ${sigName || '_______________'}\n`;
+  msg += `Date Reviewed: ${dateReviewed || '_______________'}`;
+
+  document.getElementById('modalText').textContent = msg;
+  document.getElementById('modalOverlay').classList.add('show');
+
+  document.getElementById('sendBtn').onclick = () => {
+    navigator.clipboard.writeText(msg).then(() => {
+      showToast('Copied to clipboard');
+    }).catch(() => {
+      const ta = document.createElement('textarea');
+      ta.value = msg;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('Copied to clipboard');
+    });
+  };
+});
+
+document.getElementById('closeBtn').addEventListener('click', () => {
+  document.getElementById('modalOverlay').classList.remove('show');
+});
+</script>
+</body>
+</html>
